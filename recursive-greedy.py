@@ -37,7 +37,7 @@ def settleDebts(net_amounts, min_transactions_needed):
     # Recurse for the remaining amounts
     return settleDebts(net_amounts, min_transactions_needed)
 
-# Main function to calculate and print the minimum cash flow
+# Main function to calculate and return the minimum transactions
 def calculateMinCashFlow(transactions):
     # Determine the total number of persons
     persons = set()
@@ -56,7 +56,7 @@ def calculateMinCashFlow(transactions):
         net_amounts[to_person] += amount
 
     min_transaction = settleDebts(net_amounts, 0)
-    print(min_transaction)
+    return min_transaction
 
 def main():
     transactions = [
