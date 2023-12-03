@@ -1,21 +1,28 @@
 # Python3 program to find optimized cash flow among a set of persons
 import time
 
-# Function that prints transactions that use the full credit amount
+
 def print_credit_transaction(credit_entry, debit_entry):
+    '''Function that prints transactions that use the full credit amount'''
     # prints a transaction between a creditor and and a debitor
     # structure of credit/debit entry: [net_amount, person_index]
     # Print transaction
-    print(f"Person {credit_entry[1]} pays {-1 * credit_entry[0]} to Person {debit_entry[1]}")
+    print(
+        f"Person {credit_entry[1]} pays {-1 * credit_entry[0]} to Person {debit_entry[1]}")
 
-# Function that prints transactions that use the full debit amount
+
 def print_debit_transaction(credit_entry, debit_entry):
-    print(f"Person {credit_entry[1]} pays {debit_entry[0]} to Person {debit_entry[1]}")
+    '''Function that prints transactions that use the full debit amount'''
+    print(
+        f"Person {credit_entry[1]} pays {debit_entry[0]} to Person {debit_entry[1]}")
 
-# Function that finds the fewest transactions to resolve debts
-# Parameters: credits, debits - arrays of node net values representing who owes money and who will get money
-# Returns: edges - number of transactions calculated
+
 def resolve_debts(credits, debits):
+    '''
+    Function that finds the fewest transactions to resolve debts
+    Parameters: credits, debits - arrays of node net values representing who owes money and who will get money
+    Returns: edges - number of transactions calculated
+    '''
     edges = 0
     # (The following steps are executed O(n^2) times)
     # 3. Arrange the nodes from greatest absolute amount to least absolute amount.
@@ -24,59 +31,63 @@ def resolve_debts(credits, debits):
 
     credit_entry = 0
     while credit_entry < len(credits):
-        old_edge = edges
-        # 4. Starting from the largest node (node with greatest net flow) in the credit side, 
+        old_edge = edges # track whether an edge has changed in the previous loop
         debit_entry = 0
         while debit_entry < len(debits):
-            # find a node on the debit side that has the equivalent value such that the 
-            # net flow credit node + net flow debit node = 0. 
-            # print(f"comparing {credits[credit_entry]} vs {debits[debit_entry]}")
+            # find a node on the debit side that has the equivalent value such that the
+            # net flow credit node + net flow debit node = 0.
             if credits[credit_entry][0] + debits[debit_entry][0] == 0:
                 # record transaction in edges
                 edges += 1
                 print_credit_transaction(credits[credit_entry], debits[debit_entry])
+
                 # remove the credit and debit entries from the lists since that transaction has happened
                 credits.pop(credit_entry)
                 debits.pop(debit_entry)
                 break
             else:
                 debit_entry += 1
-        if edges == old_edge: # if no transaction has been recorded on this credit entry comparison, move to next credit entry
+        
+        # if no transaction has been recorded on this credit entry comparison, move to next credit entry
+        if edges == old_edge:  
             credit_entry += 1
-    
-    # Now that exact matching nodes have been eliminated, we want to systematically balance out the rest of the nodes.
-    # 7. Repeat 5-6 until all of the nodes are eliminated and results have been recorded. O(N^2)
-    credit_entry = 0
-    debit_entry = 0
-   
+
+    # Balance out the remaining credit/debit nodes
+    credit_entry = 0 # credits list index
+    debit_entry = 0 # debits list index
+
     while len(credits) > 0 and len(debits) > 0:
-        # 5. Starting from largest credit node, connect an edge to the largest debit node and adjust node values.
+        # Starting from largest credit node, connect an edge to the largest debit node and adjust node values
         sum = credits[credit_entry][0] + debits[debit_entry][0]
-        # Record the edge formed by doing this. 
+        # Record the edge formed by doing this transaction
         edges += 1
         if sum >= 0:
-            print_credit_transaction(credits[credit_entry], debits[debit_entry])
+            print_credit_transaction(
+                credits[credit_entry], debits[debit_entry])
         else:
             print_debit_transaction(credits[credit_entry], debits[debit_entry])
 
-        # If a node hits 0 after adjustment, then remove the node from 
-        # the credit/debit sets. O(1)
-        if sum > 0: # debit still exists
+        # Check result of transaction
+        # Debit still exists
+        if sum > 0:  
             # subtract credit entry amt from debit entry amount and remove credit entry
             debits[debit_entry][0] += credits.pop(credit_entry)[0]
             debits.sort(reverse=True)
-        elif sum < 0: # credit still exists
-            # subtract debit entry amt from credit entry amount and remove debit entry
+        # Credit still exists
+        elif sum < 0:  
+            # Subtract debit entry amt from credit entry amount and remove debit entry
             credits[credit_entry][0] += debits.pop(debit_entry)[0]
             credits.sort()
-        else: # sum == 0, so we remove both the credit and debit transactions
+        # sum == 0, so we remove both the credit and debit transactions
+        else:  
             credits.pop(credit_entry)
             debits.pop(debit_entry)
-        
+
     return edges
 
-# Main function to calculate and print the minimum cash flow
+
 def calculateMinCashFlow(transactions):
+    '''Main function to calculate and print the minimum cash flow'''
     # Determine the total number of persons
     persons = set()
     for transaction in transactions:
@@ -87,7 +98,7 @@ def calculateMinCashFlow(transactions):
 
     net_amounts = [0] * num_persons
 
-    # 1. figure out the net flow at each node.
+    # Figure out the net flow at each node.
     # This value must stay the same at all times since this
     # represents the total amount of money a person is moving.
     # O(n*(n-1)) n nodes, n-1 edges attached to n nodes
@@ -100,13 +111,18 @@ def calculateMinCashFlow(transactions):
 
     print(net_amounts)
 
-    # 2. Split the nodes into two groups: credit (owing money overall, net flow < 0)
-    # and debit (receiving money overall, net flow > 0). Discard any nodes that have
-    # net flow == 0. The credit group owes money to the debit group. It should also
-    # be noted that the total amount of money the credit group owes is equal to the total
+    # Split the nodes into two groups: 
+    # - credit (owing money overall, net flow < 0)
+    # - debit (receiving money overall, net flow > 0). 
+    # Discard any nodes that have net flow == 0. 
+    # 
+    # The credit group owes money to the debit group. It should also be noted 
+    # that the total amount of money the credit group owes is equal to the total
     # amount of money the debit group should receive.
-    credits = [] # people who lose money, element structure: [net amount, person number]. This is arranged as such for smoother sorting
-    debits = [] # people who will gain money
+    credits = []  # people who lose money, element structure: [net amount, person number]
+    debits = []  # people who will gain money
+
+    # Sort people into credits or debits group based on net_amounts value
     for person_num in range(len(net_amounts)):
         net_amt = net_amounts[person_num]
         if net_amt > 0:
@@ -116,12 +132,11 @@ def calculateMinCashFlow(transactions):
             # add to credit
             credits.append([net_amt, person_num])
         # else the amount is 0, and this person has no debts or credits.
-    
+
     edges = resolve_debts(credits, debits)
     print(f"Transactions: {edges}")
     return edges
 
-# main program driver
 def main():
     transactions1 = [
         (0, 1, 1000),
@@ -149,6 +164,9 @@ def main():
         (3, 1, 500),
         (3, 0, 2000)
     ]
+
+    transactions4 = [(8, 0, 1524), (3, 2, 1913), (6, 4, 986), (8, 5, 1669),
+                     (0, 3, 401), (4, 7, 799), (3, 8, 1633), (1, 9, 679), (7, 1, 1886)]
     # track the execution time
     start_time = time.time()
 
@@ -162,8 +180,12 @@ def main():
     print("Transaction 3")
     calculateMinCashFlow(transactions3)
 
+    print("Transaction 4")
+    calculateMinCashFlow(transactions4)
+
     # log program runtime
     print("--- Executed in %s seconds ---" % (time.time() - start_time))
+
 
 if __name__ == "__main__":
     main()
