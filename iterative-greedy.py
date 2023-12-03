@@ -119,6 +119,7 @@ def calculateMinCashFlow(transactions):
     
     edges = resolve_debts(credits, debits)
     print(f"Transactions: {edges}")
+    return edges
 
 # main program driver
 def main():
